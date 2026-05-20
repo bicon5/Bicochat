@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <script src="https://unpkg.com/lucide@latest"></script>
-<script src="http://ТВОЙ_IP:3000/socket.io/socket.io.js"></script>
+<script src="https://bicochat-flpv.onrender.com/socket.io/socket.io.js"></script>
 
 <style>
 *{
@@ -1445,7 +1445,8 @@ onclick="createGroup()">
 `;
 
 lucide.createIcons();
-}
+
+const socket = io("https://bicochat-flpv.onrender.com");
 
 function createGroup(){
 
