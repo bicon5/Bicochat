@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Bicochat</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="http://ТВОЙ_IP:3000/socket.io/socket.io.js"></script>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
+
+body{
+background:#0f172a;
+overflow:hidden;
+color:white;
+}
+
+:root{
+--primary:#8B5CF6;
+--secondary:#3B82F6;
+--accent:#10B981;
+--dark:#111827;
+--light:#F3F4F6;
+--danger:#ef4444;
+}
+
+.background{
+position:fixed;
+inset:0;
+background:linear-gradient(-45deg,#8B5CF6,#3B82F6,#10B981,#7c3aed);
+background-size:400% 400%;
+animation:gradient 15s ease infinite;
+z-index:-1;
+}
+
+@keyframes gradient{
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
+}
+
+.app{
+width:100vw;
+height:100vh;
+display:flex;
+backdrop-filter:blur(18px);
+}
+
+.sidebar{
+width:370px;
+height:100%;
+background:rgba(17,24,39,.65);
+backdrop-filter:blur(25px);
+border-right:1px solid rgba(255,255,255,.08);
+display:flex;
+flex-direction:column;
+position:relative;
+}
+
+.sidebar-header{
+padding:25px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+}
+
+.logo{
+display:flex;
+align-items:center;
+gap:12px;
+}
+
+.logo-circle{
+width:52px;
+height:52px;
+border-radius:50%;
+background:linear-gradient(135deg,var(--primary),var(--secondary));
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:24px;
+font-weight:700;
+box-shadow:0 10px 25px rgba(0,0,0,.35);
+}
+
+.logo h1{
+font-size:28px;
+font-weight:700;
+}
+
+.logo p{
+font-size:12px;
+opacity:.7;
+margin-top:2px;
+}
+
+.settings-btn{
+width:48px;
+height:48px;
+border-radius:16px;
+border:none;
+background:rgba(255,255,255,.08);
+color:white;
+cursor:pointer;
+display:flex;
+align-items:center;
+justify-content:center;
+transition:.25s;
+}
+
+.settings-btn:hover{
+transform:scale(1.07);
+background:rgba(255,255,255,.16);
+}
+
+.search-container{
+padding:0 20px 18px;
+position:relative;
+}
+
+.search-container i{
+position:absolute;
+left:35px;
+top:14px;
+color:rgba(255,255,255,.7);
+}
+
+.search-input{
+width:100%;
+padding:14px 16px 14px 48px;
+border:none;
+outline:none;
+border-radius:18px;
+background:rgba(255,255,255,.08);
+color:white;
+font-size:14px;
+}
+
+.search-input::placeholder{
+color:rgba(255,255,255,.6);
+}
+
+.contacts{
+flex:1;
+overflow-y:auto;
+padding:0 15px 120px;
+}
+
+.contacts::-webkit-scrollbar{
+width:5px;
+}
+
+.contacts::-webkit-scrollbar-thumb{
+background:rgba(255,255,255,.15);
+border-radius:10px;
+}
+
+.empty{
+text-align:center;
+padding-top:100px;
+opacity:.8;
+}
+
+.contact{
+background:rgba(255,255,255,.06);
+padding:14px;
+border-radius:22px;
+display:flex;
+align-items:center;
+gap:14px;
+margin-bottom:12px;
+cursor:pointer;
+transition:.25s;
+animation:fade .3s;
+}
+
+.contact:hover{
+background:rgba(255,255,255,.12);
+transform:translateY(-2px);
+}
+
+.avatar{
+width:58px;
+height:58px;
+border-radius:50%;
+background:linear-gradient(135deg,var(--primary),var(--secondary));
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:22px;
+font-weight:700;
+overflow:hidden;
+}
+
+.avatar img{
+width:100%;
+height:100%;
+object-fit:cover;
+}
+
+.contact-info{
+flex:1;
+overflow:hidden;
+}
+
+.contact-name{
+font-weight:600;
+font-size:16px;
+}
+
+.contact-message{
+font-size:13px;
+opacity:.75;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+margin-top:5px;
+}
+
+.contact-time{
+font-size:11px;
+opacity:.6;
+}
+
+.fab{
+position:absolute;
+bottom:25px;
+left:25px;
+width:62px;
+height:62px;
+border-radius:50%;
+border:none;
+background:linear-gradient(135deg,var(--primary),var(--secondary));
+color:white;
+cursor:pointer;
+display:flex;
+align-items:center;
+justify-content:center;
+box-shadow:0 15px 35px rgba(0,0,0,.35);
+transition:.3s;
+}
+
+.fab:hover{
+transform:scale(1.1) rotate(8deg);
+}
+
+.chat-area{
+flex:1;
+display:flex;
+flex-direction:column;
+position:relative;
+}
+
+.chat-empty{
+margin:auto;
+text-align:center;
+opacity:.75;
+}
+
+.chat-empty h2{
+font-size:34px;
+margin-bottom:10px;
+}
+
+.chat-header{
+height:90px;
+padding:0 25px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+background:rgba(17,24,39,.55);
+backdrop-filter:blur(20px);
+border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.chat-user{
+display:flex;
+align-items:center;
+gap:15px;
+}
+
+.chat-user h3{
+font-size:20px;
+}
+
+.chat-user span{
+font-size:12px;
+opacity:.7;
+}
+
+.header-actions{
+display:flex;
+gap:12px;
+}
+
+.icon-btn{
+width:44px;
+height:44px;
+border-radius:14px;
+border:none;
+background:rgba(255,255,255,.08);
+color:white;
+cursor:pointer;
+display:flex;
+align-items:center;
+justify-content:center;
+transition:.25s;
+}
+
+.icon-btn:hover{
+background:rgba(255,255,255,.16);
+transform:scale(1.05);
+}
+
+.messages{
+flex:1;
+overflow-y:auto;
+padding:30px;
+display:flex;
+flex-direction:column;
+gap:14px;
+}
+
+.message{
+max-width:72%;
+padding:14px 16px;
+border-radius:24px;
+animation:slide .25s ease;
+position:relative;
+word-break:break-word;
+}
+
+.message.self{
+align-self:flex-end;
+background:var(--primary);
+border-bottom-right-radius:8px;
+}
+
+.message.other{
+align-self:flex-start;
+background:#e5e7eb;
+color:#111827;
+border-bottom-left-radius:8px;
+}
+
+.message img{
+max-width:240px;
+border-radius:16px;
+cursor:pointer;
+}
+
+.meta{
+margin-top:7px;
+font-size:11px;
+opacity:.75;
+display:flex;
+gap:10px;
+justify-content:flex-end;
+}
+
+.input-panel{
+padding:18px;
+display:flex;
+gap:12px;
+background:rgba(17,24,39,.6);
+backdrop-filter:blur(18px);
+border-top:1px solid rgba(255,255,255,.08);
+}
+
+.message-input{
+flex:1;
+border:none;
+outline:none;
+padding:16px 18px;
+border-radius:18px;
+background:rgba(255,255,255,.08);
+color:white;
+font-size:14px;
+}
+
+.message-input::placeholder{
+color:rgba(255,255,255,.55);
+}
+
+.modal-overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.45);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:1000;
+animation:fade .25s;
+}
+
+.modal{
+width:430px;
+max-height:90vh;
+overflow-y:auto;
+background:#111827;
+border-radius:28px;
+padding:28px;
+box-shadow:0 30px 80px rgba(0,0,0,.45);
+animation:scale .25s;
+}
+
+.modal h2{
+margin-bottom:20px;
+}
+
+.option-btn{
+width:100%;
+padding:16px;
+border:none;
+border-radius:18px;
+margin-bottom:12px;
+background:rgba(255,255,255,.06);
+color:white;
+font-size:15px;
+cursor:pointer;
+display:flex;
+align-items:center;
+gap:10px;
+transition:.25s;
+}
+
+.option-btn:hover{
+background:rgba(255,255,255,.12);
+}
+
+.form-group{
+margin-bottom:18px;
+}
+
+.form-group label{
+display:block;
+margin-bottom:8px;
+font-size:14px;
+font-weight:600;
+}
+
+.input-wrap{
+position:relative;
+}
+
+.input-wrap i{
+position:absolute;
+left:14px;
+top:14px;
+color:rgba(255,255,255,.6);
+}
+
+.form-input{
+width:100%;
+padding:14px 14px 14px 46px;
+border:none;
+outline:none;
+border-radius:16px;
+background:rgba(255,255,255,.08);
+color:white;
+}
+
+.group-list{
+max-height:180px;
+overflow:auto;
+margin-top:15px;
+}
+
+.group-contact{
+padding:12px;
+border-radius:16px;
+display:flex;
+align-items:center;
+gap:10px;
+background:rgba(255,255,255,.05);
+margin-bottom:10px;
+cursor:pointer;
+}
+
+.primary-btn{
+width:100%;
+padding:16px;
+border:none;
+border-radius:18px;
+background:linear-gradient(135deg,var(--primary),var(--secondary));
+color:white;
+font-size:15px;
+font-weight:600;
+cursor:pointer;
+transition:.25s;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:10px;
+}
+
+.primary-btn:hover{
+transform:scale(1.02);
+}
+
+.toast{
+position:fixed;
+right:25px;
+bottom:25px;
+padding:16px 22px;
+border-radius:18px;
+background:#111827;
+color:white;
+box-shadow:0 20px 40px rgba(0,0,0,.4);
+animation:slideUp .3s;
+z-index:3000;
+}
+
+.settings-menu{
+position:absolute;
+top:85px;
+right:20px;
+width:270px;
+background:#111827;
+border-radius:22px;
+padding:14px;
+display:none;
+z-index:2000;
+box-shadow:0 25px 60px rgba(0,0,0,.45);
+}
+
+.settings-item{
+padding:15px;
+border-radius:16px;
+display:flex;
+align-items:center;
+gap:12px;
+cursor:pointer;
+transition:.25s;
+}
+
+.settings-item:hover{
+background:rgba(255,255,255,.08);
+}
+
+.audio-player{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.image-preview{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.85);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:9999;
+}
+
+.image-preview img{
+max-width:90%;
+max-height:90%;
+border-radius:22px;
+}
+
+@keyframes fade{
+from{opacity:0;}
+to{opacity:1;}
+}
+
+@keyframes scale{
+from{opacity:0;transform:scale(.85);}
+to{opacity:1;transform:scale(1);}
+}
+
+@keyframes slide{
+from{
+opacity:0;
+transform:translateY(12px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+@keyframes slideUp{
+from{
+transform:translateY(30px);
+opacity:0;
+}
+to{
+transform:translateY(0);
+opacity:1;
+}
+}
+
+@media(max-width:900px){
+.sidebar{
+width:100%;
+position:absolute;
+z-index:20;
+}
+
+.chat-area{
+display:none;
+}
+
+.chat-area.mobile-active{
+display:flex;
+width:100%;
+position:absolute;
+z-index:25;
+background:#0f172a;
+}
+}
+</style>
+</head>
+<body>
+
+<div class="background"></div>
+
+<div class="app">
+
+<div class="sidebar">
+
+<div class="sidebar-header">
+<div class="logo">
+<div class="logo-circle">B</div>
+<div>
+<h1>Bicochat</h1>
+<p>Быстрое и безопасное общение</p>
+</div>
+</div>
+
+<button class="settings-btn" id="settingsBtn" aria-label="Настройки">
+<i data-lucide="settings"></i>
+</button>
+</div>
+
+<div class="settings-menu" id="settingsMenu">
+
+<div class="settings-item">
+<i data-lucide="shield"></i>
+<div>
+<div>Конфиденциальность</div>
+<small>Ваша переписка зашифрована, мы не храним и не передаем данные.</small>
+</div>
+</div>
+
+<div class="settings-item">
+<i data-lucide="lock"></i>
+<div>
+<div>Безопасность</div>
+<small>За мат и плохой контент — бан. Админ за вас не отвечает.</small>
+</div>
+</div>
+
+<div class="settings-item">
+<i data-lucide="info"></i>
+<div>
+<div>О проекте</div>
+<small>Безопасный мессенджер от BiconPlay. Свобода общения в защищенном цифровом пространстве.</small>
+</div>
+</div>
+
+</div>
+
+<div class="search-container">
+<i data-lucide="search"></i>
+<input class="search-input" id="searchInput" placeholder="Поиск по User ID..." />
+</div>
+
+<div class="contacts" id="contacts"></div>
+
+<button class="fab" id="fab" aria-label="Создать чат">
+<i data-lucide="plus"></i>
+</button>
+
+</div>
+
+<div class="chat-area" id="chatArea">
+
+<div class="chat-empty" id="chatEmpty">
+<h2>Bicochat</h2>
+<p>Выберите чат или создайте новый</p>
+</div>
+
+</div>
+
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+<div class="modal" id="modalContent"></div>
+</div>
+
+<div class="image-preview" id="imagePreview">
+<img id="previewImage">
+</div>
+
+<input type="file" id="imageInput" accept="image/*" hidden />
+
+<script>
+lucide.createIcons();
+
+const STORAGE_KEYS = {
+USER_ID:'bicochat_user_id',
+PROFILE:'bicochat_user_profile',
+CONTACTS:'bicochat_contacts',
+GROUPS:'bicochat_groups',
+MESSAGES:'bicochat_messages'
+};
+
+let currentChat=null;
+let mediaRecorder=null;
+let audioChunks=[];
+
+function generateId(prefix){
+return prefix + '_' + Math.random().toString(36).substring(2,10).toUpperCase();
+}
+
+function initUser(){
+let userId=localStorage.getItem(STORAGE_KEYS.USER_ID);
+
+if(!userId){
+userId=generateId('USER');
+localStorage.setItem(STORAGE_KEYS.USER_ID,userId);
+
+const profile={
+firstName:'Пользователь',
+lastName:'Bicochat',
+userId
+};
+
+localStorage.setItem(STORAGE_KEYS.PROFILE,JSON.stringify(profile));
+}
+
+if(!localStorage.getItem(STORAGE_KEYS.CONTACTS)){
+localStorage.setItem(STORAGE_KEYS.CONTACTS,'[]');
+}
+
+if(!localStorage.getItem(STORAGE_KEYS.GROUPS)){
+localStorage.setItem(STORAGE_KEYS.GROUPS,'[]');
+}
+
+if(!localStorage.getItem(STORAGE_KEYS.MESSAGES)){
+localStorage.setItem(STORAGE_KEYS.MESSAGES,'{}');
+}
+}
+
+function getContacts(){
+return JSON.parse(localStorage.getItem(STORAGE_KEYS.CONTACTS)||'[]');
+}
+
+function getGroups(){
+return JSON.parse(localStorage.getItem(STORAGE_KEYS.GROUPS)||'[]');
+}
+
+function getMessages(){
+return JSON.parse(localStorage.getItem(STORAGE_KEYS.MESSAGES)||'{}');
+}
+
+function saveContacts(data){
+localStorage.setItem(STORAGE_KEYS.CONTACTS,JSON.stringify(data));
+}
+
+function saveGroups(data){
+localStorage.setItem(STORAGE_KEYS.GROUPS,JSON.stringify(data));
+}
+
+function saveMessages(data){
+localStorage.setItem(STORAGE_KEYS.MESSAGES,JSON.stringify(data));
+}
+
+function showToast(text,error=false){
+const toast=document.createElement('div');
+toast.className='toast';
+toast.style.background=error?'#ef4444':'#111827';
+toast.innerText=text;
+
+document.body.appendChild(toast);
+
+setTimeout(()=>{
+toast.remove();
+},3000);
+}
+
+function formatTime(timestamp){
+const d=new Date(timestamp);
+return d.toLocaleTimeString([],{
+hour:'2-digit',
+minute:'2-digit'
+});
+}
+
+function renderContacts(filter=''){
+const contacts=getContacts();
+const groups=getGroups();
+
+const all=[...contacts,...groups];
+
+const container=document.getElementById('contacts');
+
+if(all.length===0){
+container.innerHTML=`
+<div class="empty">
+<h3>Контактов нет</h3>
+<p>Начните создавать чаты!</p>
+</div>
+`;
+return;
+}
+
+const filtered=all.filter(c=>{
+const id=(c.contactUserId||c.id||'').toLowerCase();
+return id.includes(filter.toLowerCase());
+});
+
+if(filtered.length===0){
+container.innerHTML=`
+<div class="empty">
+<h3>Контакт не найден</h3>
+</div>
+`;
+return;
+}
+
+container.innerHTML='';
+
+filtered.forEach(contact=>{
+
+const div=document.createElement('div');
+div.className='contact';
+
+div.innerHTML=`
+<div class="avatar">
+${contact.avatar
+? `<img src="${contact.avatar}">`
+: (contact.firstName?.[0]||contact.name?.[0]||'B')}
+</div>
+
+<div class="contact-info">
+<div class="contact-name">
+${contact.firstName
+? contact.firstName + ' ' + contact.lastName
+: contact.name}
+</div>
+
+<div class="contact-message">
+${contact.lastMessage || 'Сообщений нет'}
+</div>
+</div>
+
+<div class="contact-time">
+${contact.lastMessageTime
+? formatTime(contact.lastMessageTime)
+: ''}
+</div>
+`;
+
+div.onclick=()=>openChat(contact);
+
+container.appendChild(div);
+});
+}
+
+function openChat(chat){
+
+currentChat=chat;
+
+const area=document.getElementById('chatArea');
+
+area.classList.add('mobile-active');
+
+const messages=getMessages()[chat.chatId]||[];
+
+area.innerHTML=`
+<div class="chat-header">
+
+<div class="chat-user">
+
+<button class="icon-btn" onclick="closeChat()">
+<i data-lucide="arrow-left"></i>
+</button>
+
+<div class="avatar">
+${chat.avatar
+? `<img src="${chat.avatar}">`
+: (chat.firstName?.[0]||chat.name?.[0])}
+</div>
+
+<div>
+<h3>
+${chat.firstName
+? chat.firstName+' '+chat.lastName
+: chat.name}
+</h3>
+
+<span>
+${chat.type==='group'
+? 'Групповой чат'
+: 'online'}
+</span>
+</div>
+
+</div>
+
+<div class="header-actions">
+
+<button class="icon-btn" onclick="deleteChat()">
+<i data-lucide="trash-2"></i>
+</button>
+
+</div>
+
+</div>
+
+<div class="messages" id="messages"></div>
+
+<div class="input-panel">
+
+<input
+class="message-input"
+id="messageInput"
+placeholder="Введите сообщение..."
+maxlength="5000"
+/>
+
+<button class="icon-btn" onclick="pickImage()">
+<i data-lucide="image"></i>
+</button>
+
+<button class="icon-btn" id="micBtn" onclick="toggleRecording()">
+<i data-lucide="mic"></i>
+</button>
+
+<button class="icon-btn" onclick="sendText()">
+<i data-lucide="send"></i>
+</button>
+
+</div>
+`;
+
+renderMessages();
+lucide.createIcons();
+
+document.getElementById('messageInput')
+.addEventListener('keydown',e=>{
+if(e.key==='Enter'){
+sendText();
+}
+});
+}
+
+function closeChat(){
+document.getElementById('chatArea').classList.remove('mobile-active');
+
+document.getElementById('chatArea').innerHTML=`
+<div class="chat-empty" id="chatEmpty">
+<h2>Bicochat</h2>
+<p>Выберите чат или создайте новый</p>
+</div>
+`;
+}
+
+function renderMessages(){
+
+const container=document.getElementById('messages');
+
+const all=getMessages();
+
+const messages=all[currentChat.chatId]||[];
+
+container.innerHTML='';
+
+const myId=localStorage.getItem(STORAGE_KEYS.USER_ID);
+
+messages.forEach(msg=>{
+
+const div=document.createElement('div');
+
+div.className='message '+
+(msg.sender===myId?'self':'other');
+
+let content='';
+
+if(msg.type==='text'){
+content=`<div>${msg.content}</div>`;
+}
+
+if(msg.type==='image'){
+content=`
+<img src="${msg.content}"
+onclick="previewImage('${msg.content}')">
+`;
+}
+
+if(msg.type==='audio'){
+content=`
+<div class="audio-player">
+<button class="icon-btn"
+onclick="playAudio('${msg.content}')">
+<i data-lucide="play"></i>
+</button>
+
+<span>${msg.duration}s</span>
+</div>
+`;
+}
+
+div.innerHTML=`
+${content}
+
+<div class="meta">
+<span>${formatTime(msg.timestamp)}</span>
+<span>${msg.status==='sent'?'✓':'✓✓'}</span>
+</div>
+`;
+
+container.appendChild(div);
+});
+
+container.scrollTop=container.scrollHeight;
+lucide.createIcons();
+}
+
+function sendText(){
+
+const input=document.getElementById('messageInput');
+
+const text=input.value.trim();
+
+if(!text){
+showToast('Сообщение не может быть пустым',true);
+return;
+}
+
+const all=getMessages();
+
+if(!all[currentChat.chatId]){
+all[currentChat.chatId]=[];
+}
+
+all[currentChat.chatId].push({
+id:generateId('MSG'),
+sender:localStorage.getItem(STORAGE_KEYS.USER_ID),
+type:'text',
+content:text,
+timestamp:Date.now(),
+status:'sent'
+});
+
+saveMessages(all);
+
+updateLastMessage(text);
+
+input.value='';
+
+renderMessages();
+
+showToast('Сообщение отправлено');
+}
+
+function updateLastMessage(text){
+
+const contacts=getContacts();
+const groups=getGroups();
+
+const all=[...contacts,...groups];
+
+all.forEach(c=>{
+if(c.chatId===currentChat.chatId){
+c.lastMessage=text;
+c.lastMessageTime=Date.now();
+}
+});
+
+saveContacts(contacts);
+saveGroups(groups);
+
+renderContacts();
+}
+
+function pickImage(){
+document.getElementById('imageInput').click();
+}
+
+document.getElementById('imageInput')
+.addEventListener('change',e=>{
+
+const file=e.target.files[0];
+
+if(!file) return;
+
+if(file.size > 5*1024*1024){
+showToast('Максимальный размер 5MB',true);
+return;
+}
+
+const reader=new FileReader();
+
+reader.onload=()=>{
+
+const all=getMessages();
+
+if(!all[currentChat.chatId]){
+all[currentChat.chatId]=[];
+}
+
+all[currentChat.chatId].push({
+id:generateId('MSG'),
+sender:localStorage.getItem(STORAGE_KEYS.USER_ID),
+type:'image',
+content:reader.result,
+timestamp:Date.now(),
+status:'sent'
+});
+
+saveMessages(all);
+
+updateLastMessage('📷 Изображение');
+
+renderMessages();
+
+showToast('Изображение отправлено');
+};
+
+reader.readAsDataURL(file);
+});
+
+function previewImage(src){
+document.getElementById('imagePreview').style.display='flex';
+document.getElementById('previewImage').src=src;
+}
+
+document.getElementById('imagePreview').onclick=()=>{
+document.getElementById('imagePreview').style.display='none';
+};
+
+async function toggleRecording(){
+
+const btn=document.getElementById('micBtn');
+
+if(mediaRecorder && mediaRecorder.state==='recording'){
+mediaRecorder.stop();
+return;
+}
+
+try{
+
+const stream=await navigator.mediaDevices.getUserMedia({
+audio:true
+});
+
+mediaRecorder=new MediaRecorder(stream);
+
+audioChunks=[];
+
+mediaRecorder.ondataavailable=e=>{
+audioChunks.push(e.data);
+};
+
+mediaRecorder.onstop=()=>{
+
+const blob=new Blob(audioChunks,{
+type:'audio/webm'
+});
+
+const reader=new FileReader();
+
+reader.onloadend=()=>{
+
+const all=getMessages();
+
+if(!all[currentChat.chatId]){
+all[currentChat.chatId]=[];
+}
+
+all[currentChat.chatId].push({
+id:generateId('MSG'),
+sender:localStorage.getItem(STORAGE_KEYS.USER_ID),
+type:'audio',
+content:reader.result,
+duration:15,
+timestamp:Date.now(),
+status:'sent'
+});
+
+saveMessages(all);
+
+updateLastMessage('🎤 Голосовое');
+
+renderMessages();
+
+showToast('Голосовое сообщение отправлено');
+};
+
+reader.readAsDataURL(blob);
+};
+
+mediaRecorder.start();
+
+btn.innerHTML='<i data-lucide="stop-circle"></i>';
+
+lucide.createIcons();
+
+}catch{
+showToast(
+'Микрофон не доступен. Проверьте разрешения браузера',
+true
+);
+}
+}
+
+function playAudio(base64){
+const audio=new Audio(base64);
+audio.play();
+}
+
+function deleteChat(){
+
+if(!confirm(
+'Вы уверены, что хотите удалить чат?'
+)) return;
+
+let contacts=getContacts();
+let groups=getGroups();
+let messages=getMessages();
+
+contacts=contacts.filter(c=>
+c.chatId!==currentChat.chatId
+);
+
+groups=groups.filter(g=>
+g.chatId!==currentChat.chatId
+);
+
+delete messages[currentChat.chatId];
+
+saveContacts(contacts);
+saveGroups(groups);
+saveMessages(messages);
+
+closeChat();
+
+renderContacts();
+
+showToast('Чат удалён');
+}
+
+function openCreateModal(){
+
+document.getElementById('modalOverlay').style.display='flex';
+
+document.getElementById('modalContent').innerHTML=`
+
+<h2>Создать</h2>
+
+<button class="option-btn"
+onclick="openDirectChatModal()">
+<i data-lucide="user"></i>
+Создать личный чат
+</button>
+
+<button class="option-btn"
+onclick="openGroupModal()">
+<i data-lucide="users"></i>
+Создать группу
+</button>
+`;
+
+lucide.createIcons();
+}
+
+function openDirectChatModal(){
+
+document.getElementById('modalContent').innerHTML=`
+
+<h2>Создать чат</h2>
+
+<div class="form-group">
+<label>User ID контакта</label>
+
+<div class="input-wrap">
+<i data-lucide="search"></i>
+
+<input
+class="form-input"
+id="friendId"
+placeholder="Введите User ID друга"
+/>
+</div>
+</div>
+
+<div class="form-group">
+<label>Имя</label>
+
+<div class="input-wrap">
+<i data-lucide="user"></i>
+
+<input
+class="form-input"
+id="firstName"
+placeholder="Введите имя"
+/>
+</div>
+</div>
+
+<div class="form-group">
+<label>Фамилия</label>
+
+<div class="input-wrap">
+<i data-lucide="user"></i>
+
+<input
+class="form-input"
+id="lastName"
+placeholder="Введите фамилию"
+/>
+</div>
+</div>
+
+<button class="primary-btn"
+onclick="createDirectChat()">
+<i data-lucide="check-circle"></i>
+Создать
+</button>
+`;
+
+lucide.createIcons();
+}
+
+function createDirectChat(){
+
+const friendId=
+document.getElementById('friendId').value.trim();
+
+const firstName=
+document.getElementById('firstName').value.trim();
+
+const lastName=
+document.getElementById('lastName').value.trim();
+
+if(!friendId || !firstName || !lastName){
+showToast('Заполните все поля',true);
+return;
+}
+
+if(!friendId.startsWith('USER_')){
+showToast('Неверный формат User ID',true);
+return;
+}
+
+const contacts=getContacts();
+
+if(contacts.some(c=>c.contactUserId===friendId)){
+showToast('Контакт уже существует',true);
+return;
+}
+
+const chat={
+id:generateId('CONTACT'),
+contactUserId:friendId,
+firstName,
+lastName,
+chatId:generateId('CHAT'),
+type:'direct',
+lastMessage:'',
+lastMessageTime:Date.now(),
+avatar:''
+};
+
+contacts.push(chat);
+
+saveContacts(contacts);
+
+document.getElementById('modalOverlay').style.display='none';
+
+renderContacts();
+
+openChat(chat);
+
+showToast('Чат успешно создан!');
+}
+
+function openGroupModal(){
+
+const contacts=getContacts();
+
+document.getElementById('modalContent').innerHTML=`
+
+<h2>Создать группу</h2>
+
+<div class="form-group">
+<label>Название группы</label>
+
+<div class="input-wrap">
+<i data-lucide="users"></i>
+
+<input
+class="form-input"
+id="groupName"
+maxlength="50"
+placeholder="Введите название группы"
+/>
+</div>
+</div>
+
+<div class="form-group">
+<label>Аватар группы</label>
+
+<input type="file" id="groupAvatar">
+</div>
+
+<div class="group-list" id="groupContacts">
+
+${contacts.length===0
+? '<p>Нет доступных контактов</p>'
+: contacts.map(c=>`
+<div class="group-contact">
+<input type="checkbox"
+value="${c.contactUserId}">
+
+<span>
+${c.firstName} ${c.lastName}
+</span>
+</div>
+`).join('')}
+
+</div>
+
+<button class="primary-btn"
+onclick="createGroup()">
+<i data-lucide="plus"></i>
+Создать группу
+</button>
+`;
+
+lucide.createIcons();
+}
+
+function createGroup(){
+
+const name=
+document.getElementById('groupName').value.trim();
+
+if(!name){
+showToast('Введите название группы',true);
+return;
+}
+
+const selected=[
+...document.querySelectorAll(
+'#groupContacts input:checked'
+)
+].map(i=>i.value);
+
+if(selected.length===0){
+showToast(
+'Выберите минимум один контакт',
+true
+);
+return;
+}
+
+const avatarInput=
+document.getElementById('groupAvatar');
+
+const file=avatarInput.files[0];
+
+const save=(avatar='')=>{
+
+const groups=getGroups();
+
+const group={
+id:generateId('GROUP'),
+name,
+members:selected,
+chatId:generateId('CHAT'),
+avatar,
+createdAt:Date.now(),
+type:'group',
+lastMessage:'',
+lastMessageTime:Date.now()
+};
+
+groups.push(group);
+
+saveGroups(groups);
+
+document.getElementById('modalOverlay').style.display='none';
+
+renderContacts();
+
+openChat(group);
+
+showToast('Группа успешно создана!');
+};
+
+if(file){
+
+const reader=new FileReader();
+
+reader.onload=()=>save(reader.result);
+
+reader.readAsDataURL(file);
+
+}else{
+save();
+}
+}
+
+document.getElementById('fab')
+.onclick=openCreateModal;
+
+document.getElementById('modalOverlay')
+.onclick=e=>{
+if(e.target.id==='modalOverlay'){
+e.target.style.display='none';
+}
+};
+
+document.getElementById('settingsBtn')
+.onclick=()=>{
+
+const menu=
+document.getElementById('settingsMenu');
+
+menu.style.display=
+menu.style.display==='block'
+? 'none'
+: 'block';
+};
+
+document.getElementById('searchInput')
+.addEventListener('input',e=>{
+renderContacts(e.target.value);
+});
+
+window.onclick=e=>{
+if(
+!e.target.closest('#settingsBtn') &&
+!e.target.closest('#settingsMenu')
+){
+document.getElementById('settingsMenu')
+.style.display='none';
+}
+};
+
+initUser();
+renderContacts();
+</script>
+
+</body>
+</html>
