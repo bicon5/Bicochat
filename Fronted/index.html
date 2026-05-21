@@ -1447,6 +1447,13 @@ onclick="createGroup()">
 lucide.createIcons();
 
 const socket = io("https://bicochat-flpv.onrender.com");
+socket.on("connect", () => {
+  const userId = localStorage.getItem("bicochat_user_id");
+
+  if (userId) {
+    socket.emit("register", userId);
+  }
+});
 
 function createGroup(){
 
