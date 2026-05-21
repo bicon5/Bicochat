@@ -1035,8 +1035,20 @@ lucide.createIcons();
 function sendText(){
 
 const input=document.getElementById('messageInput');
-
 const text=input.value.trim();
+
+if(!text){
+showToast('Сообщение не может быть пустым',true);
+return;
+}
+
+socket.emit("send-message", {
+  from: localStorage.getItem("bicochat_user_id"),
+  to: currentChat.contactUserId,
+  message: text,
+  type: "text",
+  timestamp: Date.now()
+});
 
 if(!text){
 showToast('Сообщение не может быть пустым',true);
@@ -1453,6 +1465,30 @@ socket.on("connect", () => {
   if (userId) {
     socket.emit("register", userId);
   }
+});
+
+socket.on("receive-message", (data) => {
+
+  const all = getMessages();
+
+  if (!all[currentChat.chatId]) {
+    all[currentChat.chatId] = [];
+  }
+
+  all[currentChat.chatId].push({
+    id: generateId('MSG'),
+    sender: data.from,
+    type: data.type,
+    content: data.message,
+    timestamp: data.timestamp,
+    status: 'sent'
+  });
+
+  saveMessages(all);
+
+  renderMessages();
+
+  showToast('Новое сообщение');
 });
 
 function createGroup(){
